@@ -28,6 +28,7 @@
                                     -From 'John Doe <john.doe@gmail.com>' `
                                     -Credentials $SenderCredentials `
                                     -Subject 'Waste Collection' `
+                                    -EventDate $EventDate
                                     -Body $Body
 #>
 Function Send-WasteCollectionInvitations
@@ -51,6 +52,9 @@ Function Send-WasteCollectionInvitations
 
         [Parameter(Mandatory=$true)]
         [string]$Subject,
+
+        [Parameter(Mandatory=$true)]
+        [datetime]$EventDate,
 
         [Parameter(Mandatory=$true)]
         [string]$Body
@@ -82,7 +86,7 @@ Function Send-WasteCollectionInvitations
     # BODY #
     ########
 
-    $TodayUTC = (Get-Date).ToUniversalTime()
+    $EventUTC = $EventDate.ToUniversalTime()
     
     # To have the description of the invite make grammatical sense,
     # I remove the default subject prefix from it.
@@ -101,9 +105,9 @@ Function Send-WasteCollectionInvitations
     [void]$s.AppendLine("METHOD:REQUEST")
     [void]$s.AppendLine("BEGIN:VEVENT")
     #[void]$s.AppendLine("TRANSP:TRANSPARENT")
-    [void]$s.AppendLine([String]::Format("DTSTART:{0:yyyyMMddT190000Z}", $TodayUTC))
-    [void]$s.AppendLine([String]::Format("DTSTAMP:{0:yyyyMMddTHHmmssZ}", $TodayUTC.AddMinutes(-1)))
-    [void]$s.AppendLine([String]::Format("DTEND:{0:yyyyMMddT200000Z}", $TodayUTC))
+    [void]$s.AppendLine([String]::Format("DTSTART:{0:yyyyMMddT190000Z}", $EventUTC.AddDays(-1)))
+    [void]$s.AppendLine([String]::Format("DTSTAMP:{0:yyyyMMddTHHmmssZ}", (Get-Date).ToUniversalTime().AddMinutes(-1)))
+    [void]$s.AppendLine([String]::Format("DTEND:{0:yyyyMMddT200000Z}", $EventUTC.AddDays(-1)))
     [void]$s.AppendLine("LOCATION:Holmes Chapel, Cheshire")
     [void]$s.AppendLine([String]::Format("UID:{0}", [Guid]::NewGuid()))
     [void]$s.AppendLine("ORGANIZER;CN=`""+$Mail.From.DisplayName+"`":MAILTO:"+$Mail.From.Address)
