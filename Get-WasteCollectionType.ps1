@@ -80,7 +80,8 @@ $CurTable = $CollectionDatesTable `
                 -replace "</?(TABLE).*>" 
 $collectionDates = $CurTable | ConvertFrom-Csv -Header Bin,Day,Date,Type | Select-Object Date,Type
 
-# Clean up the table to make sense - convert dates to datetime and change verbose type of collection to "bin colour"
+# Clean up the table to make sense - convert dates to datetime objects so we can do calculations
+# on them and change verbose type of collection to "bin colour"
 For ($i = 0; $i -le ($collectionDates.Count-1); $i++) {
     $collectionDates[$i].Date = Get-Date $collectionDates[$i].Date
     Switch -Regex ($collectionDates[$i].Type) {
@@ -94,6 +95,7 @@ For ($i = 0; $i -le ($collectionDates.Count-1); $i++) {
 [Array]$Fragment = $collectionDates | Where {$_.Date -le (Get-Date).AddDays(6)} | Select-Object Date,Type
 
 # Now change that date to a format we understand and put the collection bin colour in the subject line.
+# I didn't do this earlier because I needed to select dates by calculation.
 For ($i=0;$i -le $Fragment.GetUpperBound(0);$i++) {
     $Fragment[$i].Date = Get-Date $Fragment[$i].Date -Format "dddd dd/MM/yyyy"
     If ($i % 2 -eq 1) {
@@ -108,7 +110,7 @@ $Fragment = $Fragment | ConvertTo-Html -Fragment
 # Get an HTML template for our email.
 $HtmlTemplate = Get-Content "$ScriptPath\contact_template.htm" -Raw # -Raw parameter gets the file instead of loading each line in an Array.
     
-# Change the template's placeholders with useful information.
+# Change the template's placeholders with the tabular information.
 $HtmlData = $HtmlTemplate.Replace('%%fragment%%', $Fragment)
 
 # Send the email plus invites! using the template.
