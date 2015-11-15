@@ -14,9 +14,9 @@ $Sender = "Waste Collections <waste_collections@lewisroberts.com>"
 # "Name" = display name, "Value" = email address
 $To = @{
     "Lewis Roberts" = "lewis@lewisroberts.com";
-    "Joe Bloggs" = "joe.bloggs@lewisroberts.com";
+    #"Joe Bloggs" = "joe.bloggs@lewisroberts.com";
 }
-# Can be accessed as $To.`Lewis Roberts`
+# Can be accessed as $To.`Lewis Roberts` if you like.
 
 # I always use Gmail for the solution so I'm not providing control
 # over the use of EnableSSL, it is ALWAYS enabled.
@@ -94,6 +94,11 @@ For ($i = 0; $i -le ($collectionDates.Count-1); $i++) {
 # Select only the dates that occur in the next 6 days (ie. just this week's collections)
 [Array]$Fragment = $collectionDates | Where {$_.Date -le (Get-Date).AddDays(6)} | Select-Object Date,Type
 
+# To set a reminder (invite) date on the evening before the collection, we need to know
+# the date of the collection. This is sent to the Send-WasteCollectionInvitations function
+# unedited. It is converted to "the night before" within that function.
+[datetime]$EventDate = $collectionDates | Where {$_.Date -le (Get-Date).AddDays(6)} | Group-Object -Property Date -NoElement | Select-Object -First 1 -Property Name -ExpandProperty Name | Get-Date
+
 # Now change that date to a format we understand and put the collection bin colour in the subject line.
 # I didn't do this earlier because I needed to select dates by calculation.
 For ($i=0;$i -le $Fragment.GetUpperBound(0);$i++) {
@@ -120,4 +125,5 @@ Send-WasteCollectionInvitations -To $To `
                                 -From $Sender `
                                 -Credentials $EmailCredentials `
                                 -Subject $Subject `
+                                -EventDate $EventDate `
                                 -Body $HtmlData
