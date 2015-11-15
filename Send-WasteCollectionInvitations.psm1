@@ -5,13 +5,22 @@
    Sends invitations by email to a provided hashtable of recipients.
    You must define the recipients, server, port, credentials, from.
    The idea is not to run this over and over again for every recipient
-   but to send a single email and include all attendees on the invite.
+   but to send a single email and include all attendees on the invite
+   (usually the people responsible for putting the bin out!).
+   If "automatically add events to calendar" is enabled on the users'
+   Gmail calendar, they will get a reminder at 7pm in their time zone.
+   I've not done any comparison of the dates obtained from the HTML
+   scrape with the day the reminder is set - most people have the
+   same collection day every week so, if the script is
+   scheduled to run the day before the usual collection (at 10am)
+   it will send the invite at 7pm on that day including the type of
+   collection as the subject.
 .EXAMPLE
 
    $Recipients = 
     @{
         "Lewis Roberts" = "lewis@lewisroberts.com";
-        "Kym Jones" = "miss.kr.jones@gmail.com";
+        Joe Bloggs" = "joe.bloggs@gmail.com";
     }
     Send-WasteCollectionInvitations -To $Recipients `
                                     -Server 'smtp.gmail.com' `
@@ -74,12 +83,16 @@ Function Send-WasteCollectionInvitations
     ########
 
     $TodayUTC = (Get-Date).ToUniversalTime()
+    
+    # To have the description of the invite make grammatical sense,
+    # I remove the default subject prefix from it.
     $Description = ($Subject -replace "Waste Collection - ").ToLower()
 
     # Add the HTML message body to the email from the injected $Body.
     $Mail.AlternateViews.Add([Net.Mail.AlternateView]::CreateAlternateViewFromString($Body, 'text/html'))
     
     # Build the invitation with StringBuilder
+    # I've left some of the iCal bits in as a reminder of available options.
     $s = New-Object System.Text.StringBuilder
     [void]$s.AppendLine('BEGIN:VCALENDAR')
     [void]$s.AppendLine("PRODID:-//lewisroberts//EN")
@@ -91,13 +104,13 @@ Function Send-WasteCollectionInvitations
     [void]$s.AppendLine([String]::Format("DTSTART:{0:yyyyMMddT190000Z}", $TodayUTC))
     [void]$s.AppendLine([String]::Format("DTSTAMP:{0:yyyyMMddTHHmmssZ}", $TodayUTC.AddMinutes(-1)))
     [void]$s.AppendLine([String]::Format("DTEND:{0:yyyyMMddT200000Z}", $TodayUTC))
-    [void]$s.AppendLine("LOCATION:9 Eastgate Road, Holmes Chapel, Cheshire")
+    [void]$s.AppendLine("LOCATION:Holmes Chapel, Cheshire")
     [void]$s.AppendLine([String]::Format("UID:{0}", [Guid]::NewGuid()))
     [void]$s.AppendLine("ORGANIZER;CN=`""+$Mail.From.DisplayName+"`":MAILTO:"+$Mail.From.Address)
     Foreach ($Recipient in $To.GetEnumerator()) {
         [void]$s.AppendLine("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=ACCEPTED;CN="+$($Recipient.Name)+":mailto:"+$($Recipient.Value)+"")
     }
-    #[void]$s.AppendLine("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=Waste Collections;X-NUM-GUESTS=0:mailto:bounce@lewisroberts.com")
+    #[void]$s.AppendLine("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE;CN=Waste Collections;X-NUM-GUESTS=0:mailto:waste_collections@lewisroberts.com")
     [void]$s.AppendLine("SUMMARY;ENCODING=QUOTED-PRINTABLE:$Subject")
     [void]$s.AppendLine("DESCRIPTION;ENCODING=QUOTED-PRINTABLE:This is a reminder for tomorrow's waste collection. The $Description must be placed at the kerbside by 6am.")
     [void]$s.AppendLine("SEQUENCE:0")
@@ -112,11 +125,11 @@ Function Send-WasteCollectionInvitations
     [void]$s.AppendLine("END:VEVENT")
     [void]$s.Append("END:VCALENDAR")
 
-    # Output to disk, if you wish. Outputs to required UTF-8 w/o BOM.
+    # Output the .ics file to disk, if you wish. Outputs to required UTF-8 w/o BOM.
     #[IO.File]::WriteAllLines('calendarentry.ics', $s.ToString())
 
     # Create the invitation and add it to the message body.
-    # Doing it this way gives a richer interface in Gmail
+    # Doing it this way gives a richer interface in Gmail and probably Outlook.com
     $ContentType = New-Object System.Net.Mime.ContentType("text/calendar")
     $ContentType.Parameters.Add("method","REQUEST")
     $ContentType.Parameters.Add("name", "invite.ics")

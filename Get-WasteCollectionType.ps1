@@ -7,29 +7,36 @@ Import-Module ".\Send-WasteCollectionInvitations.psm1"
 # VARIABLES #
 #############
 
-# Variables to use when sending the email.
-$Sender = "Waste Collections <bounce@lewisroberts.com>"
+# Variables to use when sending the invitations emails.
+$Sender = "Waste Collections <waste_collections@lewisroberts.com>"
 
 # For Send-WasteCollectionInvitations, a hashtable (an associative array) is required.
 # "Name" = display name, "Value" = email address
 $To = @{
     "Lewis Roberts" = "lewis@lewisroberts.com";
-    "Kym Jones" = "miss.kr.jones@gmail.com";
+    "Joe Bloggs" = "joe.bloggs@lewisroberts.com";
 }
 # Can be accessed as $To.`Lewis Roberts`
 
+# I always use Gmail for the solution so I'm not providing control
+# over the use of EnableSSL, it is ALWAYS enabled.
+# Without MFA being enabled ont eh account, no matter how many times
+# I confirmed that "enable lesser security" was On for the account
+# Gmail's SMTP would always fail to authorise. I had to enable MFA
+# enable lesserver security and set up an application password. Grr.
 $Subject = "Waste Collection"
 $Server = "smtp.gmail.com"
 $Port = "587"
 
 # To create an encrypted credential used by this script, use this
 # on the machine and logged on as the user that will run the script:
+# Helps avoid having to leave plain text credentials in the script.
 #Get-Credential | Export-Clixml -Path ($env:COMPUTERNAME+"bounce-lewisroberts.xml")
 $EmailCredentials = Import-Clixml -Path ($env:COMPUTERNAME+"bounce-lewisroberts.xml")
 
-# The house details
+# The house details to submit to the site (where the results should be based)
 $Postcode = "CW47BN"
-$HouseNo = "9"
+$HouseNo = "1"
 
 ##############
 # PROCESSING #
@@ -104,7 +111,7 @@ $HtmlTemplate = Get-Content "$ScriptPath\contact_template.htm" -Raw # -Raw param
 # Change the template's placeholders with useful information.
 $HtmlData = $HtmlTemplate.Replace('%%fragment%%', $Fragment)
 
-# Send the email using the template.
+# Send the email plus invites! using the template.
 Send-WasteCollectionInvitations -To $To `
                                 -Server $Server `
                                 -Port $Port `
