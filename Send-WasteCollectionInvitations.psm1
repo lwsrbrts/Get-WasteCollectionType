@@ -9,12 +9,10 @@
    (usually the people responsible for putting the bin out!).
    If "automatically add events to calendar" is enabled on the users'
    Gmail calendar, they will get a reminder at 7pm in their time zone.
-   I've not done any comparison of the dates obtained from the HTML
-   scrape with the day the reminder is set - most people have the
-   same collection day every week so, if the script is
-   scheduled to run the day before the usual collection (at 10am)
-   it will send the invite at 7pm on that day including the type of
-   collection as the subject.
+
+   The invitation is set to occur at 7pm the evening before the calculated
+   date of collection. ie. If collection is on Monday 16th, the invitation
+   will be set for Sunday 15th at 7pm.
 .EXAMPLE
 
    $Recipients = 
