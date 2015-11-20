@@ -1,7 +1,7 @@
 ﻿#requires -version 4
 
 $ScriptPath = Split-Path $Script:MyInvocation.MyCommand.Path
-Import-Module ".\Send-WasteCollectionInvitations.psm1"
+Import-Module -Name "$ScriptPath\Send-WasteCollectionInvitations.psm1"
 
 #############
 # VARIABLES #
@@ -92,12 +92,12 @@ For ($i = 0; $i -le ($collectionDates.Count-1); $i++) {
 }
 
 # Select only the dates that occur in the next 6 days (ie. just this week's collections)
-[Array]$Fragment = $collectionDates | Where {$_.Date -le (Get-Date).AddDays(6)} | Select-Object Date,Type
+[Array]$Fragment = $collectionDates | Where-Object {$_.Date -le (Get-Date).AddDays(6)} | Select-Object Date,Type
 
 # To set a reminder (invite) date on the evening before the collection, we need to know
 # the date of the collection. This is sent to the Send-WasteCollectionInvitations function
 # unedited. It is converted to "the night before" within that function.
-[datetime]$EventDate = $collectionDates | Where {$_.Date -le (Get-Date).AddDays(6)} | Group-Object -Property Date -NoElement | Select-Object -First 1 -Property Name -ExpandProperty Name | Get-Date
+[datetime]$EventDate = $collectionDates | Where-Object {$_.Date -le (Get-Date).AddDays(6)} | Group-Object -Property Date -NoElement | Select-Object -First 1 -Property Name -ExpandProperty Name | Get-Date
 
 # Now change that date to a format we understand and put the collection bin colour in the subject line.
 # I didn't do this earlier because I needed to select dates by calculation.
