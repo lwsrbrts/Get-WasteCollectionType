@@ -68,6 +68,7 @@ $CollectionDatesTable = $CollectionDatesTable.Replace("`r`n","")
 # Will break if they change the HTML.
 $CurTable = $CollectionDatesTable `
                 -replace "<THEAD>.*</THEAD>" `
+                -replace "<TR[^\>]*?hidden.*?<\/TR>" <# They're using CSS to just "hide" garden waste collections in Winter. #> `
                 -replace "</TR>","`r`n" `
                 -replace "<TR .*`">" `
                 -replace "<TABLE .*<TH>" `
