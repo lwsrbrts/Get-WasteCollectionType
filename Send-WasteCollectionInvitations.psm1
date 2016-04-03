@@ -83,8 +83,9 @@ Function Send-WasteCollectionInvitations
     ########
     # BODY #
     ########
-
-    $EventUTC = $EventDate.ToUniversalTime()
+    
+    # Set the event date to UTC - can't for the life of me remember why.
+    $EventUTC = [DateTime]::SpecifyKind($EventDate, [DateTimeKind]::Utc)
     
     # To have the description of the invite make grammatical sense,
     # I remove the default subject prefix from it.
