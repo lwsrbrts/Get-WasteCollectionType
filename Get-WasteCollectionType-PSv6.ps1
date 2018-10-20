@@ -1,4 +1,4 @@
-﻿#requires -version 4
+﻿#requires -version 6
 
 # Invoke-WebRequest changes significantly in PowerShell Core 6. ParsedHtml no longer exists!
 
@@ -38,60 +38,35 @@ $EmailCredentials = Import-Clixml -Path ($env:COMPUTERNAME + "bounce-lewisrobert
 
 # The house details to submit to the site (where the results should be based)
 $Postcode = "CW48FE"
-$HouseNo = "36"
+$HouseNo = "22"
 
 ##############
 # PROCESSING #
 ##############
 
-# Set up a session with the page. ASP.
-$r = Invoke-WebRequest -Uri 'http://online.cheshireeast.gov.uk/MyCollectionDay/' -SessionVariable RequestForm
+$search = Invoke-WebRequest -Uri "http://online.cheshireeast.gov.uk/MyCollectionDay/SearchByAjax/Search?postcode=$($Postcode)&propertyname=$($HouseNo)" -Method Get
 
-# Set the form's required information
-$body = @{
-    'ctl00$ContentPlaceHolder1$txtPostcode'     = $Postcode;
-    'ctl00$ContentPlaceHolder1$txtHouseNameNum' = $HouseNo;
-    'ctl00$ContentPlaceHolder1$btnSearch'       = 'Search'
-    __LASTFOCUS = $r.InputFields.FindByName('__LASTFOCUS').value
-    __VIEWSTATE = $r.InputFields.FindByName('__VIEWSTATE').value
-    __VIEWSTATEGENERATOR = $r.InputFields.FindByName('__VIEWSTATEGENERATOR').value
-    __EVENTTARGET = $r.InputFields.FindByName('__EVENTTARGET').value
-    __EVENTARGUMENT = $r.InputFields.FindByName('__EVENTARGUMENT').value
-    __EVENTVALIDATION = $r.InputFields.FindByName('__EVENTVALIDATION').value
-}
+$searchResult = $search.Links | Where-Object {$_.class -match "get-job-details"}
 
-# POST the form and get the results from the page
-$response = Invoke-WebRequest -Uri 'http://online.cheshireeast.gov.uk/MyCollectionDay/' `
-    -WebSession $RequestForm `
-    -Method POST `
-    -Body $body `
-    -ContentType 'application/x-www-form-urlencoded'
+$wasteCollections = Invoke-WebRequest -Uri "http://online.cheshireeast.gov.uk/MyCollectionDay/SearchByAjax/GetBartecJobList?uprn=$($searchResult.'data-uprn')&onelineaddress=$([uri]::EscapeUriString(($searchResult.'data-onelineaddress')))"
 
-#  Extract all of the cells with valid/important content from the raw content. ParsedHtml no longer exists in PS6.
-$CollectionDatesTable = $response.RawContent | Select-String '<td(.)*<\/td>' -AllMatches | ForEach-Object {$_.Matches} | ForEach-Object {$_.Value}
+$CollectionDatesTable = $wasteCollections.Content | Select-String -Pattern '<label for=(.|\n|\r)+?<\/label>' -AllMatches | ForEach-Object {$_.Matches} | ForEach-Object {$_.Value}
 
-# Remove line feeds etc..apparently trying to replace `r`n just does not work.
-$CollectionDatesTable = $CollectionDatesTable -join ''
-
-# Clean up the table and convert to rough CSV by injecting commas
-# All customised depending on the table structure
-# Will break if they change the HTML.
 $CurTable = $CollectionDatesTable `
-    -replace "<TD( colspan=.5.)></TD>", "`r`n" `
-    -replace '<td></td>', ',' `
-    -replace '<\/td>', ',' `
-    -replace '<td>' `
-    -replace 'Other,Rec.*'
+    -replace '<label for="(.)*">' `
+    -replace '</label>', ',' `
+    -join ''
 
-# Convert to an object, leaving out the suppressed/hidden delivery types and return the date and type of collection
-$collectionDates = $CurTable | ConvertFrom-Csv -Header Bin, Day, Date, Type, Suppress | Where-Object Suppress -ne 'Suppressed' | Select-Object Date, Type
+$Results = $CurTable | Select-String -Pattern '(([^,]*,){3}\s*)' -AllMatches | ForEach-Object {$_.Matches} | ForEach-Object {$_.Value}
+
+$collectionDates = ConvertFrom-Csv -Header Day, Date, Type -InputObject $Results
 
 # Clean up the table to make sense - convert dates to datetime objects so we can do calculations
 # on them and change verbose type of collection to "bin colour"
 For ($i = 0; $i -le ($collectionDates.Count - 1); $i++) {
     $collectionDates[$i].Date = Get-Date $collectionDates[$i].Date
     Switch -Regex ($collectionDates[$i].Type) {
-        "Other" {$collectionDates[$i].Type = "Black Bin"}
+        "General" {$collectionDates[$i].Type = "Black Bin"}
         "Recycling" {$collectionDates[$i].Type = "Silver Bin"}
         "Garden" {$collectionDates[$i].Type = "Brown Bin"}
     }

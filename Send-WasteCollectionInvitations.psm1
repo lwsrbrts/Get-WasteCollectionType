@@ -107,7 +107,7 @@ Function Send-WasteCollectionInvitations
     [void]$s.AppendLine([String]::Format("DTSTART:{0:yyyyMMddT190000Z}", $EventUTC.AddDays(-1)))
     [void]$s.AppendLine([String]::Format("DTSTAMP:{0:yyyyMMddTHHmmssZ}", (Get-Date).ToUniversalTime().AddMinutes(-1)))
     [void]$s.AppendLine([String]::Format("DTEND:{0:yyyyMMddT200000Z}", $EventUTC.AddDays(-1)))
-    [void]$s.AppendLine("LOCATION:Holmes Chapel, Cheshire")
+    [void]$s.AppendLine("LOCATION:Cranage, Cheshire")
     [void]$s.AppendLine([String]::Format("UID:{0}", [Guid]::NewGuid()))
     [void]$s.AppendLine("ORGANIZER;CN=`""+$Mail.From.DisplayName+"`":MAILTO:"+$Mail.From.Address)
     Foreach ($Recipient in $To.GetEnumerator()) {
