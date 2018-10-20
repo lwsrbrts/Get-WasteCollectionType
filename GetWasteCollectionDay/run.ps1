@@ -32,7 +32,12 @@ $collectionDates = ConvertFrom-Csv -Header Day, Date, Type -InputObject $Results
 # Clean up the table to make sense - convert dates to datetime objects so we can do calculations
 # on them and change verbose type of collection to "bin colour"
 For ($i = 0; $i -le ($collectionDates.Count - 1); $i++) {
+    
+    # If the "WEBSITE_TIME_ZONE" is set to a a region that implements daylight saving, dates change due to midnight being the default
+    # time when a date is converted.
+    # Still thinking about how this should be handled.
     $collectionDates[$i].Date = [datetime]::ParseExact($collectionDates[$i].Date, "dd/MM/yyyy", [cultureinfo]::InvariantCulture)
+
 
     Switch -Regex ($collectionDates[$i].Type) {
         "General" {$collectionDates[$i].Type = "Black Bin"}
