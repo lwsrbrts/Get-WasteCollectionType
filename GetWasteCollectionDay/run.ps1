@@ -32,7 +32,8 @@ $collectionDates = ConvertFrom-Csv -Header Day, Date, Type -InputObject $Results
 # Clean up the table to make sense - convert dates to datetime objects so we can do calculations
 # on them and change verbose type of collection to "bin colour"
 For ($i = 0; $i -le ($collectionDates.Count - 1); $i++) {
-    $collectionDates[$i].Date = Get-Date $collectionDates[$i].Date
+    $collectionDates[$i].Date = [datetime]::ParseExact($collectionDates[$i].Date, "dd/MM/yyyy", [cultureinfo]::InvariantCulture)
+
     Switch -Regex ($collectionDates[$i].Type) {
         "General" {$collectionDates[$i].Type = "Black Bin"}
         "Recycling" {$collectionDates[$i].Type = "Silver Bin"}
