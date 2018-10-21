@@ -3,6 +3,10 @@ $requestBody = Get-Content $req -Raw | ConvertFrom-Json
 $Postcode = [System.Web.HttpUtility]::HtmlEncode($requestBody.postcode)
 $HouseNo = [System.Web.HttpUtility]::HtmlEncode($requestBody.houseno)
 
+if ($requestBody.postcode -eq $null -or $requestBody.houseno -eq $null) {
+    Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "Missing postcode or houseno. Both are required."}'
+}
+
 # Get all the variables and their names/values. Handy for debugging.
 <#
 $resp = @{}
@@ -11,12 +15,27 @@ gci env:appsetting* | % { $resp["ENV:$($_.Name)"] = $_.Value }
 $jsonResp = $resp | ConvertTo-Json -Compress
 Out-File -Encoding Ascii -FilePath $res -inputObject $jsonResp
 #>
-
-$search = Invoke-WebRequest -UseBasicParsing -Uri "http://online.cheshireeast.gov.uk/MyCollectionDay/SearchByAjax/Search?postcode=$($Postcode)&propertyname=$($HouseNo)" -Method Get
+Try {
+    $search = Invoke-WebRequest -UseBasicParsing -Uri "http://online.cheshireeast.gov.uk/MyCollectionDay/SearchByAjax/Search?postcode=$($Postcode)&propertyname=$($HouseNo)" -Method Get -ErrorAction Stop
+}
+Catch {
+    Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "The search using the details provided did not complete correctly. This may indicate that the address provided is incorrect or that the service/website is unavailable."}'
+    exit
+}
 
 $searchResult = $search.Links | Where-Object {$_.class -match "get-job-details"}
+If (-not($searchResult)) {
+    Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "No results were returned or an error occurred. This may indicate that the service or website is unavailable."}'
+    exit
+}
 
-$wasteCollections = Invoke-WebRequest -UseBasicParsing -Uri "http://online.cheshireeast.gov.uk/MyCollectionDay/SearchByAjax/GetBartecJobList?uprn=$($searchResult.'data-uprn')&onelineaddress=$([uri]::EscapeUriString(($searchResult.'data-onelineaddress')))"
+Try {
+    $wasteCollections = Invoke-WebRequest -UseBasicParsing -Uri "http://online.cheshireeast.gov.uk/MyCollectionDay/SearchByAjax/GetBartecJobList?uprn=$($searchResult.'data-uprn')&onelineaddress=$([uri]::EscapeUriString(($searchResult.'data-onelineaddress')))" -ErrorAction Stop
+}
+Catch {
+    Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "The search for the collection dates for the property did not complete. This may indicate that the service or website is unavailable."}'
+    exit
+}
 
 $CollectionDatesTable = $wasteCollections.Content | Select-String -Pattern '<label for=(.|\n|\r)+?<\/label>' -AllMatches | ForEach-Object {$_.Matches} | ForEach-Object {$_.Value}
 
