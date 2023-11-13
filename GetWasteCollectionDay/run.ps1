@@ -7,14 +7,13 @@ param($req)
 $Postcode = [System.Web.HttpUtility]::HtmlEncode($req.Body.Postcode)
 $HouseNo = [System.Web.HttpUtility]::HtmlEncode($req.Body.HouseNo)
 
-if ($req.Body.Postcode -eq $null -or $req.Body.HouseNo -eq $null) {
+if ($null -eq $req.Body.Postcode -or $null -eq $req.Body.HouseNo) {
     
     Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::OK
         Body = '{"error": "Missing postcode or houseno. Both are required."}'
     })
     
-    #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "Missing postcode or houseno. Both are required."}'
 }
 
 # Get all the variables and their names/values. Handy for debugging.
@@ -29,7 +28,6 @@ Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
 })
 exit
 #>
-#Out-File -Encoding Ascii -FilePath $res -inputObject $jsonResp
 
 Try {
     $search = Invoke-WebRequest -UseBasicParsing -Uri "http://online.cheshireeast.gov.uk/MyCollectionDay/SearchByAjax/Search?postcode=$($Postcode)&propertyname=$($HouseNo)" -Method Get -ErrorAction Stop
@@ -40,7 +38,6 @@ Catch {
         Body = '{"error": "The search using the details provided did not complete correctly. This may indicate that the address provided is incorrect or that the service/website is unavailable."}'
     })
 
-    #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "The search using the details provided did not complete correctly. This may indicate that the address provided is incorrect or that the service/website is unavailable."}'
     exit
 }
 
@@ -52,7 +49,6 @@ If (-not($searchResult)) {
         Body = '{"error": "No results were returned or an error occurred. This may indicate that the service or website is unavailable."}'
     })
     
-    #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "No results were returned or an error occurred. This may indicate that the service or website is unavailable."}'
     exit
 }
 
@@ -65,7 +61,6 @@ Catch {
         Body = '{"error": "The search for the collection dates for the property did not complete. This may indicate that the service or website is unavailable."}'
     })
 
-    #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "The search for the collection dates for the property did not complete. This may indicate that the service or website is unavailable."}'
     exit
 }
 
@@ -117,5 +112,3 @@ Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
     StatusCode = [HttpStatusCode]::OK
     Body = ($cleanCollectionSchedule | ConvertTo-Json -Depth 5)
 })
-
-#Out-File -Encoding Ascii -FilePath $res -inputObject ($cleanCollectionSchedule | ConvertTo-Json -Depth 5)
