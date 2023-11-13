@@ -4,8 +4,8 @@ using namespace System.Net
 param($req)
 
 $requestBody = Get-Content $req -Raw | ConvertFrom-Json
-$Postcode = [System.Web.HttpUtility]::HtmlEncode($requestBody.postcode)
-$HouseNo = [System.Web.HttpUtility]::HtmlEncode($requestBody.houseno)
+$Postcode = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.postcode)
+$HouseNo = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.houseno)
 if ($requestBody.postcode -eq $null -or $requestBody.houseno -eq $null) {
     
     Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
