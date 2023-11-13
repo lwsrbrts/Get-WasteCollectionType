@@ -49,7 +49,7 @@ If (-not($searchResult)) {
     
     Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::OK
-        Body = '{"error": "No results were returned or an error occurred. This may indicate that the service or website is unavailable."}'
+        Body = $req.Body + '{"error": "No results were returned or an error occurred. This may indicate that the service or website is unavailable."}'
     })
     
     #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "No results were returned or an error occurred. This may indicate that the service or website is unavailable."}'
