@@ -7,19 +7,18 @@ $requestBody = Get-Content $req -Raw | ConvertFrom-Json
 $Postcode = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.postcode)
 $HouseNo = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.houseno)
 
-<#
 if ($requestBody.body.postcode -eq $null -or $requestBody.body.houseno -eq $null) {
     
     Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::OK
-        Body = '{"error": "Missing postcode or houseno. Both are required."}'
+        Body = $requestBody + '{"error": "Missing postcode or houseno. Both are required."}'
     })
     
     #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "Missing postcode or houseno. Both are required."}'
 }
-#>
-# Get all the variables and their names/values. Handy for debugging.
 
+# Get all the variables and their names/values. Handy for debugging.
+<#
 $resp = @{}
 get-variable | ? { $_.Value -is [string] } | % { $resp["$($_.Name)"] = $_.Value }
 gci env:appsetting* | % { $resp["ENV:$($_.Name)"] = $_.Value }
@@ -29,7 +28,7 @@ Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
     Body = $jsonResp
 })
 exit
-
+#>
 #Out-File -Encoding Ascii -FilePath $res -inputObject $jsonResp
 
 Try {
