@@ -11,7 +11,7 @@ if ($requestBody.body.postcode -eq $null -or $requestBody.body.houseno -eq $null
     
     Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::OK
-        Body = $req + '{"error": "Missing postcode or houseno. Both are required."}'
+        Body = $req.Body + '{"error": "Missing postcode or houseno. Both are required."}'
     })
     
     #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "Missing postcode or houseno. Both are required."}'
