@@ -13,7 +13,8 @@ if ($null -eq $req.Body.Postcode -or $null -eq $req.Body.HouseNo) {
         StatusCode = [HttpStatusCode]::OK
         Body = '{"error": "Missing postcode or houseno. Both are required."}'
     })
-    
+
+    exit
 }
 
 # Get all the variables and their names/values. Handy for debugging.
