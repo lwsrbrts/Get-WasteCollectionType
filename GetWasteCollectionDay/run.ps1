@@ -6,7 +6,7 @@ param($req)
 $requestBody = Get-Content $req -Raw | ConvertFrom-Json
 $Postcode = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.postcode)
 $HouseNo = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.houseno)
-if ($requestBody.postcode -eq $null -or $requestBody.houseno -eq $null) {
+if ($requestBody.body.postcode -eq $null -or $requestBody.body.houseno -eq $null) {
     
     Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::OK
