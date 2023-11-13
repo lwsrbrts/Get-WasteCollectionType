@@ -1,11 +1,17 @@
 # POST method: $req
-
+param($req)
 
 $requestBody = Get-Content $req -Raw | ConvertFrom-Json
 $Postcode = [System.Web.HttpUtility]::HtmlEncode($requestBody.postcode)
 $HouseNo = [System.Web.HttpUtility]::HtmlEncode($requestBody.houseno)
 if ($requestBody.postcode -eq $null -or $requestBody.houseno -eq $null) {
-    Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "Missing postcode or houseno. Both are required."}'
+    
+    Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
+        StatusCode = [HttpStatusCode]::OK
+        Body = '{"error": "Missing postcode or houseno. Both are required."}'
+    })
+    
+    #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "Missing postcode or houseno. Both are required."}'
 }
 
 # Get all the variables and their names/values. Handy for debugging.
@@ -81,4 +87,10 @@ $cleanCollectionSchedule = foreach ($Entry in $collectionDates) {
     New-Object -TypeName PSObject -Property $Property
 }
 
-Out-File -Encoding Ascii -FilePath $res -inputObject ($cleanCollectionSchedule | ConvertTo-Json -Depth 5)
+# Associate values to output bindings by calling 'Push-OutputBinding'.
+Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
+    StatusCode = [HttpStatusCode]::OK
+    Body = ($cleanCollectionSchedule | ConvertTo-Json -Depth 5)
+})
+
+#Out-File -Encoding Ascii -FilePath $res -inputObject ($cleanCollectionSchedule | ConvertTo-Json -Depth 5)
