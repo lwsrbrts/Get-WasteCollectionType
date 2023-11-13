@@ -3,15 +3,15 @@ using namespace System.Net
 # POST method: $req
 param($req)
 
-$requestBody = Get-Content $req -Raw | ConvertFrom-Json
-$Postcode = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.postcode)
-$HouseNo = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.houseno)
+#$requestBody = Get-Content $req -Raw | ConvertFrom-Json
+$Postcode = [System.Web.HttpUtility]::HtmlEncode($req.Body.Postcode)
+$HouseNo = [System.Web.HttpUtility]::HtmlEncode($req.Body.HouseNo)
 
-if ($requestBody.body.postcode -eq $null -or $requestBody.body.houseno -eq $null) {
+if ($req.Body.Postcode -eq $null -or $req.Body.HouseNo -eq $null) {
     
     Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::OK
-        Body = $req.Body + '{"error": "Missing postcode or houseno. Both are required."}'
+        Body = '{"error": "Missing postcode or houseno. Both are required."}'
     })
     
     #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "Missing postcode or houseno. Both are required."}'
@@ -49,7 +49,7 @@ If (-not($searchResult)) {
     
     Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
         StatusCode = [HttpStatusCode]::OK
-        Body = $req.Body + '{"error": "No results were returned or an error occurred. This may indicate that the service or website is unavailable."}'
+        Body = '{"error": "No results were returned or an error occurred. This may indicate that the service or website is unavailable."}'
     })
     
     #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "No results were returned or an error occurred. This may indicate that the service or website is unavailable."}'
