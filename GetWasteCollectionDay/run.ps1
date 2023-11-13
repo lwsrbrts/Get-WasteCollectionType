@@ -6,6 +6,8 @@ param($req)
 $requestBody = Get-Content $req -Raw | ConvertFrom-Json
 $Postcode = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.postcode)
 $HouseNo = [System.Web.HttpUtility]::HtmlEncode($requestBody.body.houseno)
+
+<#
 if ($requestBody.body.postcode -eq $null -or $requestBody.body.houseno -eq $null) {
     
     Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
@@ -15,15 +17,21 @@ if ($requestBody.body.postcode -eq $null -or $requestBody.body.houseno -eq $null
     
     #Out-File -Encoding Ascii -FilePath $res -inputObject '{"error": "Missing postcode or houseno. Both are required."}'
 }
-
+#>
 # Get all the variables and their names/values. Handy for debugging.
-<#
+
 $resp = @{}
 get-variable | ? { $_.Value -is [string] } | % { $resp["$($_.Name)"] = $_.Value }
 gci env:appsetting* | % { $resp["ENV:$($_.Name)"] = $_.Value }
 $jsonResp = $resp | ConvertTo-Json -Compress
-Out-File -Encoding Ascii -FilePath $res -inputObject $jsonResp
-#>
+Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
+    StatusCode = [HttpStatusCode]::OK
+    Body = $jsonResp
+})
+exit
+
+#Out-File -Encoding Ascii -FilePath $res -inputObject $jsonResp
+
 Try {
     $search = Invoke-WebRequest -UseBasicParsing -Uri "http://online.cheshireeast.gov.uk/MyCollectionDay/SearchByAjax/Search?postcode=$($Postcode)&propertyname=$($HouseNo)" -Method Get -ErrorAction Stop
 }
