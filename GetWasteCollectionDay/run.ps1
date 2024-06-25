@@ -131,7 +131,7 @@ foreach ($Entry in $collectionDates) {
     if ($collectionSchedule.ContainsKey($CollectionDate)) {
         # Append the type if it's not already listed for that date
         if ($collectionSchedule[$CollectionDate].Type -notcontains $Type) {
-            $collectionSchedule[$CollectionDate].Type += ", $Type"
+            $collectionSchedule[$CollectionDate].Type += "& $Type"
         }
     }
     else {
