@@ -76,39 +76,6 @@ $Results = $CurTable | Select-String -Pattern '(([^,]*,){3}\s*)' -AllMatches | F
 
 $collectionDates = ConvertFrom-Csv -Header Day, Date, Type -InputObject $Results
 
-# Clean up the table to make sense - convert dates to datetime objects so we can do calculations
-# on them and change verbose type of collection to "bin colour"
-    
-# If the "WEBSITE_TIME_ZONE" is set to a a region that implements daylight saving, dates change due to midnight being the default
-# time when a date is converted.
-# Still thinking about how this should be handled.
-<#
-$cleanCollectionSchedule = foreach ($Entry in $collectionDates) {
-
-    Try {
-        $CollectionDate = [datetime]::ParseExact($Entry.Date, "dd/MM/yyyy", [cultureinfo]::InvariantCulture)
-    }
-    Catch {
-        Continue # Skip that entry as we can't decipher the date.
-    }
-
-    Switch -Regex ($Entry.Type) {
-        "General" { $Type = "Black Bin" }
-        "Recycling" { $Type = "Silver Bin" }
-        "Garden" { $Type = "Brown Bin" }
-    }
-
-    $Property = [ordered]@{
-        Day  = $Entry.Day
-        Date = $CollectionDate
-        Type = $Type
-
-    }
-
-    New-Object -TypeName PSObject -Property $Property
-}
-#>
-
 $collectionSchedule = @{}
 
 foreach ($Entry in $collectionDates) {
@@ -145,7 +112,6 @@ foreach ($Entry in $collectionDates) {
 }
 
 $collectionSchedule.Values | Sort-Object Date| ConvertTo-Json -Depth 5
-
 
 # Associate values to output bindings by calling 'Push-OutputBinding'.
 Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
