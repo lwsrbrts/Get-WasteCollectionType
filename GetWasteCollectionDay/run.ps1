@@ -82,7 +82,7 @@ $collectionDates = ConvertFrom-Csv -Header Day, Date, Type -InputObject $Results
 # If the "WEBSITE_TIME_ZONE" is set to a a region that implements daylight saving, dates change due to midnight being the default
 # time when a date is converted.
 # Still thinking about how this should be handled.
-
+<#
 $cleanCollectionSchedule = foreach ($Entry in $collectionDates) {
 
     Try {
@@ -107,9 +107,49 @@ $cleanCollectionSchedule = foreach ($Entry in $collectionDates) {
 
     New-Object -TypeName PSObject -Property $Property
 }
+#>
+
+$collectionSchedule = @{}
+
+foreach ($Entry in $collectionDates) {
+    Try {
+        $CollectionDate = [datetime]::ParseExact($Entry.Date, "dd/MM/yyyy", [cultureinfo]::InvariantCulture)
+    }
+    Catch {
+        Continue # Skip that entry as we can't decipher the date.
+    }
+
+    # Determine collection type
+    $Type = switch -Regex ($Entry.Type) {
+        "General" { "Black Bin" }
+        "Recycling" { "Silver Bin" }
+        "Garden" { "Brown Bin" }
+        default { $_ } # Include type as is if not matched
+    }
+
+    # Check if the date already has an entry in the hashtable
+    if ($collectionSchedule.ContainsKey($CollectionDate)) {
+        # Append the type if it's not already listed for that date
+        if ($collectionSchedule[$CollectionDate].Type -notcontains $Type) {
+            $collectionSchedule[$CollectionDate].Type += ", $Type"
+        }
+    }
+    else {
+        # Create a new entry for the date with the type
+        $collectionSchedule[$CollectionDate] = [PSCustomObject]@{
+            Day  = $Entry.Day
+            Date = $CollectionDate
+            Type = $Type
+        }
+    }
+}
+
+$collectionSchedule.Values | Sort-Object Date| ConvertTo-Json -Depth 5
+
 
 # Associate values to output bindings by calling 'Push-OutputBinding'.
 Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
     StatusCode = [HttpStatusCode]::OK
-    Body = ($cleanCollectionSchedule | ConvertTo-Json -Depth 5)
+    #Body = ($cleanCollectionSchedule | ConvertTo-Json -Depth 5)
+    Body = $collectionSchedule.Values | Sort-Object Date | ConvertTo-Json -Depth 5
 })
