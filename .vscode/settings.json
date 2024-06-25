@@ -3,5 +3,6 @@
     "azureFunctions.projectLanguage": "PowerShell",
     "azureFunctions.projectRuntime": "~1",
     "debug.internalConsoleOptions": "neverOpen",
-    "azureFunctions.templateFilter": "All"
+    "azureFunctions.templateFilter": "All",
+    "azureAutomation.directory.basePath": "c:\\Users\\Lewis Roberts"
 }
