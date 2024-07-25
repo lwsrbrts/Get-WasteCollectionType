@@ -88,9 +88,9 @@ foreach ($Entry in $collectionDates) {
 
     # Determine collection type
     $Type = switch -Regex ($Entry.Type) {
-        "General" { "⬛Black Bin" }
-        "Recycling" { "⬜Silver Bin" }
-        "Garden" { "🟫Brown Bin" }
+        "General" { "Black Bin" }
+        "Recycling" { "Silver Bin" }
+        "Garden" { "Brown Bin" }
         default { $_ } # Include type as is if not matched
     }
 
