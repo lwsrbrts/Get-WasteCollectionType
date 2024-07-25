@@ -88,17 +88,17 @@ foreach ($Entry in $collectionDates) {
 
     # Determine collection type
     $Type = switch -Regex ($Entry.Type) {
-        "General" { "Black Bin" }
-        "Recycling" { "Silver Bin" }
-        "Garden" { "Brown Bin" }
+        "General" { "⬛Black Bin" }
+        "Recycling" { "⬜Silver Bin" }
+        "Garden" { "🟫Brown Bin" }
         default { $_ } # Include type as is if not matched
     }
 
     # Check if the date already has an entry in the hashtable
     if ($collectionSchedule.ContainsKey($CollectionDate)) {
-        # Append the type if it's not already listed for that date
+        # Add type if it's not already in the list
         if ($collectionSchedule[$CollectionDate].Type -notcontains $Type) {
-            $collectionSchedule[$CollectionDate].Type += " & $Type"
+            $collectionSchedule[$CollectionDate].Type += $Type
         }
     }
     else {
@@ -106,12 +106,23 @@ foreach ($Entry in $collectionDates) {
         $collectionSchedule[$CollectionDate] = [PSCustomObject]@{
             Day  = $Entry.Day
             Date = $CollectionDate
-            Type = $Type
+            Type = @($Type) # Store types in a list
         }
     }
 }
 
-$collectionSchedule.Values | Sort-Object Date| ConvertTo-Json -Depth 5
+# Define a sorting order for the types
+$typeOrder = @{
+    "Silver Bin" = 1
+    "Brown Bin" = 2
+    "Black Bin" = 3
+}
+
+# Process each entry to sort the types in the defined order and convert to string
+foreach ($key in $collectionSchedule.Keys) {
+    $sortedTypes = $collectionSchedule[$key].Type | Sort-Object { $typeOrder[$_] }
+    $collectionSchedule[$key].Type = $sortedTypes -join ", "
+}
 
 # Associate values to output bindings by calling 'Push-OutputBinding'.
 Push-OutputBinding -Name res -Value ([HttpResponseContext]@{
