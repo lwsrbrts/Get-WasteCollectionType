@@ -121,7 +121,7 @@ $typeOrder = @{
 # Process each entry to sort the types in the defined order and convert to string
 foreach ($key in $collectionSchedule.Keys) {
     $sortedTypes = $collectionSchedule[$key].Type | Sort-Object { $typeOrder[$_] }
-    $collectionSchedule[$key].Type = $sortedTypes -join ", "
+    $collectionSchedule[$key].Type = $sortedTypes -join "& "
 }
 
 # Associate values to output bindings by calling 'Push-OutputBinding'.
